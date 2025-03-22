@@ -269,3 +269,40 @@
         (ok true)
     )
 )
+
+;; Transfer System
+
+(define-public (request-credential-transfer 
+    (credential-id (string-ascii 64))
+    (new-owner principal)
+    (transfer-type (string-ascii 32))
+    (expiry-time uint))
+    
+    (let (
+        (transfer-id (var-get transfer-counter))
+        (credential (unwrap! (map-get? credentials {id: credential-id, student: tx-sender}) ERR-CREDENTIAL-NOT-FOUND))
+    )
+        (asserts! (not (get revoked credential)) ERR-INVALID-STATUS)
+        
+        (map-set transfer-requests transfer-id
+            {
+                credential-id: credential-id,
+                old-owner: tx-sender,
+                new-owner: new-owner,
+                status: "pending",
+                request-time: block-height,
+                expiry-time: expiry-time,
+                transfer-type: transfer-type
+            }
+        )
+        
+        (var-set transfer-counter (+ transfer-id u1))
+        (ok transfer-id)
+    )
+)
+
+;; Helper Functions
+
+(define-private (is-institution (address principal))
+    (default-to false (get active (map-get? institutions address)))
+)
