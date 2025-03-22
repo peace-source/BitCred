@@ -72,3 +72,36 @@
         last-endorsed: uint
     }
 )
+
+(define-map endorsements
+    {credential-id: (string-ascii 64), endorser: principal}
+    {
+        timestamp: uint,
+        weight: uint,
+        comment: (string-ascii 256),
+        endorser-type: (string-ascii 32)
+    }
+)
+
+(define-map institution-delegates
+    {institution: principal, delegate: principal}
+    {
+        active: bool,
+        permissions: (list 10 (string-ascii 32)),
+        added-at: uint,
+        expiry: uint
+    }
+)
+
+(define-map transfer-requests
+    uint
+    {
+        credential-id: (string-ascii 64),
+        old-owner: principal,
+        new-owner: principal,
+        status: (string-ascii 16),
+        request-time: uint,
+        expiry-time: uint,
+        transfer-type: (string-ascii 32)
+    }
+)
