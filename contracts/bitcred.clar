@@ -306,3 +306,43 @@
 (define-private (is-institution (address principal))
     (default-to false (get active (map-get? institutions address)))
 )
+
+(define-private (process-credential-issuance
+    (credential-id (string-ascii 64))
+    (student principal)
+    (degree (string-ascii 64))
+    (year uint)
+    (metadata-url (string-ascii 256))
+    (expiry-date uint)
+    (category (string-ascii 32)))
+    
+    (begin
+        (map-set credentials 
+            {id: credential-id, student: student}
+            {
+                institution: tx-sender,
+                degree: degree,
+                year: year,
+                verified: true,
+                endorsements: u0,
+                metadata-url: metadata-url,
+                expiry-date: expiry-date,
+                revoked: false,
+                category: category,
+                issue-date: block-height,
+                last-endorsed: u0
+            }
+        )
+        true
+    )
+)
+
+;; Read-Only Functions
+
+(define-read-only (get-institution-info (institution principal))
+    (map-get? institutions institution)
+)
+
+(define-read-only (get-credential-info (credential-id (string-ascii 64)) (student principal))
+    (map-get? credentials {id: credential-id, student: student})
+)
