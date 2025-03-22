@@ -105,3 +105,45 @@
         transfer-type: (string-ascii 32)
     }
 )
+
+;; Institution Management
+
+(define-public (register-institution (name (string-ascii 64)))
+    (let ((caller tx-sender))
+        (asserts! (not (default-to false (get active (map-get? institutions caller)))) ERR-ALREADY-REGISTERED)
+        (try! (stx-transfer? MINIMUM-STAKE caller (as-contract tx-sender)))
+        
+        (map-set institutions caller {
+            name: name,
+            stake-amount: MINIMUM-STAKE,
+            credentials-issued: u0,
+            reputation-score: u100,
+            active: true,
+            suspension-status: false,
+            registration-date: block-height,
+            last-update: block-height
+        })
+        
+        (var-set total-institutions (+ (var-get total-institutions) u1))
+        (ok true)
+    )
+)
+
+(define-public (add-delegate 
+    (delegate-address principal)
+    (permissions (list 10 (string-ascii 32)))
+    (expiry uint))
+    (let ((institution tx-sender))
+        (asserts! (is-institution institution) ERR-NOT-AUTHORIZED)
+        (map-set institution-delegates 
+            {institution: institution, delegate: delegate-address}
+            {
+                active: true,
+                permissions: permissions,
+                added-at: block-height,
+                expiry: expiry
+            }
+        )
+        (ok true)
+    )
+)
