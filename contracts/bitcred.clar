@@ -147,3 +147,50 @@
         (ok true)
     )
 )
+
+;; Credential Management
+
+(define-public (issue-credential 
+    (credential-id (string-ascii 64))
+    (student principal)
+    (degree (string-ascii 64))
+    (year uint)
+    (metadata-url (string-ascii 256))
+    (expiry-date uint)
+    (category (string-ascii 32)))
+    
+    (let (
+        (institution tx-sender)
+        (inst-data (unwrap! (map-get? institutions institution) ERR-NOT-AUTHORIZED))
+    )
+        (asserts! (get active inst-data) ERR-NOT-AUTHORIZED)
+        (asserts! (not (get suspension-status inst-data)) ERR-INVALID-STATUS)
+        
+        (map-set credentials 
+            {id: credential-id, student: student}
+            {
+                institution: institution,
+                degree: degree,
+                year: year,
+                verified: true,
+                endorsements: u0,
+                metadata-url: metadata-url,
+                expiry-date: expiry-date,
+                revoked: false,
+                category: category,
+                issue-date: block-height,
+                last-endorsed: u0
+            }
+        )
+        
+        (map-set institutions institution
+            (merge inst-data 
+                {
+                    credentials-issued: (+ (get credentials-issued inst-data) u1),
+                    last-update: block-height
+                }
+            )
+        )
+        (ok true)
+    )
+)
